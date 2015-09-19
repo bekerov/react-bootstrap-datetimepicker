@@ -7,7 +7,9 @@ import Constants from "./Constants.js";
 export default class DateTimeField extends Component {
   static defaultProps = {
     dateTime: moment().format("x"),
+    calendarFormat: "MMMM YYYY",
     format: "x",
+    locale: "en",
     showToday: true,
     viewMode: "days",
     daysOfWeekDisabled: [],
@@ -17,9 +19,14 @@ export default class DateTimeField extends Component {
     }
   }
 
-  resolvePropsInputFormat = () => {
-    if (this.props.inputFormat) { return this.props.inputFormat; }
-    switch (this.props.mode) {
+  newLocalizedMoment = (dateTime, format, strictParse) => {
+    return moment(dateTime, format, this.props.locale, strictParse);
+  }
+
+  resolvePropsInputFormat = (nextProps) => {
+    let props = nextProps || this.props;
+    if (props.inputFormat) { return this.props.inputFormat; }
+    switch (props.mode) {
       case Constants.MODE_TIME:
         return "h:mm A";
       case Constants.MODE_DATE:
@@ -33,6 +40,8 @@ export default class DateTimeField extends Component {
     dateTime: PropTypes.string,
     onChange: PropTypes.func,
     format: PropTypes.string,
+    calendarFormat: PropTypes.string,
+    locale: PropTypes.string,
     inputProps: PropTypes.object,
     inputFormat: PropTypes.string,
     defaultText: PropTypes.string,
@@ -56,47 +65,47 @@ export default class DateTimeField extends Component {
         left: -9999,
         zIndex: "9999 !important"
       },
-      viewDate: moment(this.props.dateTime, this.props.format, true).startOf("month"),
-      selectedDate: moment(this.props.dateTime, this.props.format, true),
-      inputValue: typeof this.props.defaultText !== "undefined" ? this.props.defaultText : moment(this.props.dateTime, this.props.format, true).format(this.resolvePropsInputFormat())
+      viewDate: this.newLocalizedMoment(this.props.dateTime, this.props.format, true).startOf("month"),
+      selectedDate: this.newLocalizedMoment(this.props.dateTime, this.props.format, true),
+      inputValue: typeof this.props.defaultText !== "undefined" ? this.props.defaultText : this.newLocalizedMoment(this.props.dateTime, this.props.format, true).format(this.resolvePropsInputFormat())
   }
 
   componentWillReceiveProps = (nextProps) => {
-    let state = {};
+    if (moment(nextProps.dateTime, nextProps.format, nextProps.locale, true).isValid()) {
+      return this.setState({
+        viewDate: moment(nextProps.dateTime, nextProps.format, nextProps.locale, true).startOf("month"),
+        selectedDate: moment(nextProps.dateTime, nextProps.format, nextProps.locale, true),
+        inputValue: moment(nextProps.dateTime, nextProps.format, nextProps.locale, true).format(this.resolvePropsInputFormat(nextProps))
+      });
+    }
     if (nextProps.inputFormat !== this.props.inputFormat) {
-        state.inputFormat = nextProps.inputFormat;
-        state.inputValue = moment(nextProps.dateTime, nextProps.format, true).format(nextProps.inputFormat);
+      return this.setState({
+        inputFormat: nextProps.inputFormat
+      });
     }
-
-    if (nextProps.dateTime !== this.props.dateTime && moment(nextProps.dateTime, nextProps.format, true).isValid()) {
-      state.viewDate = moment(nextProps.dateTime, nextProps.format, true).startOf("month");
-      state.selectedDate = moment(nextProps.dateTime, nextProps.format, true);
-      state.inputValue = moment(nextProps.dateTime, nextProps.format, true).format(nextProps.inputFormat ? nextProps.inputFormat : this.state.inputFormat);
-    }
-    return this.setState(state);
   }
 
 
 
   onChange = (event) => {
     const value = event.target == null ? event : event.target.value;
-    if (moment(value, this.state.inputFormat, true).isValid()) {
+    if (this.newLocalizedMoment(value, this.state.inputFormat, true).isValid()) {
       this.setState({
-        selectedDate: moment(value, this.state.inputFormat, true),
-        viewDate: moment(value, this.state.inputFormat, true).startOf("month")
+        selectedDate: this.newLocalizedMoment(value, this.state.inputFormat, true),
+        viewDate: this.newLocalizedMoment(value, this.state.inputFormat, true).startOf("month")
       });
     }
 
     return this.setState({
       inputValue: value
     }, function() {
-      return this.props.onChange(moment(this.state.inputValue, this.state.inputFormat, true).format(this.props.format), value);
+      return this.props.onChange(this.newLocalizedMoment(this.state.inputValue, this.state.inputFormat, true).format(this.props.format));
     });
 
   }
 
   getValue = () => {
-    return moment(this.state.inputValue, this.props.inputFormat, true).format(this.props.format);
+    return this.newLocalizedMoment(this.state.inputValue, this.props.inputFormat, true).format(this.props.format);
   }
 
   setSelectedDate = (e) => {
@@ -330,6 +339,7 @@ export default class DateTimeField extends Component {
                   addMinute={this.addMinute}
                   addMonth={this.addMonth}
                   addYear={this.addYear}
+                  calendarFormat={this.props.calendarFormat}
                   daysOfWeekDisabled={this.props.daysOfWeekDisabled}
                   maxDate={this.props.maxDate}
                   minDate={this.props.minDate}
@@ -363,4 +373,3 @@ export default class DateTimeField extends Component {
     );
   }
 }
-
