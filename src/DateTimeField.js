@@ -9,7 +9,7 @@ export default class DateTimeField extends Component {
     dateTime: moment().format("x"),
     calendarFormat: "MMMM YYYY",
     format: "x",
-    locale: "en",
+    locale: "ru",
     showToday: true,
     viewMode: "days",
     daysOfWeekDisabled: [],
