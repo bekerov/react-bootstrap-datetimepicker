@@ -3,6 +3,7 @@ import moment from "moment";
 import { Glyphicon } from "react-bootstrap";
 import DateTimePicker from "./DateTimePicker.js";
 import Constants from "./Constants.js";
+import ReactDOM from "react-dom";
 
 export default class DateTimeField extends Component {
   static defaultProps = {
@@ -258,6 +259,8 @@ export default class DateTimeField extends Component {
     });
   }
 
+  offsetTop = null
+
   onClick = () => {
     let classes, gBCR, offset, placePosition, scrollTop, styles;
     if (this.state.showPicker) {
@@ -278,23 +281,25 @@ export default class DateTimeField extends Component {
       offset.top = offset.top + this.refs.datetimepicker.getDOMNode().offsetHeight;
       scrollTop = (window.pageYOffset !== undefined) ? window.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop;
       placePosition = this.props.direction === "up" ? "top" : this.props.direction === "bottom" ? "bottom" : this.props.direction === "auto" ? offset.top + this.refs.widget.getDOMNode().offsetHeight > window.offsetHeight + scrollTop && this.refs.widget.offsetHeight + this.refs.datetimepicker.getDOMNode().offsetHeight > offset.top ? "top" : "bottom" : void 0;
+      if (this.offsetTop == null){
+        this.offsetTop = ReactDOM.findDOMNode(this.refs.widget).offsetHeight;
+      }
       if (placePosition === "top") {
-        offset.top = -this.refs.widget.getDOMNode().offsetHeight - this.getDOMNode().clientHeight - 2;
+        offset.top = -this.offsetTop;
         classes.top = true;
         classes.bottom = false;
-        classes["pull-right"] = true;
       } else {
         offset.top = 40;
         classes.top = false;
         classes.bottom = true;
-        classes["pull-right"] = true;
       }
+      classes["pull-right"] = true;
       styles = {
         display: "block",
         position: "absolute",
         top: offset.top,
         left: "auto",
-        right: 40
+        right: 20
       };
       return this.setState({
         widgetStyle: styles,
